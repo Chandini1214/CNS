@@ -17,6 +17,7 @@ public class SubstitutionCipher {
 
         String decryptedText = decrypt(encryptedText, key);
         System.out.println("Decrypted Text: " + decryptedText);
+        sc.close();
     }
 
     // Method to encrypt using substitution cipher
