@@ -85,7 +85,6 @@ public class MonoalphabeticCipher {
 
         if (!isValidKey(key)) {
             System.out.println("Invalid key! Please ensure it contains exactly 26 unique lowercase letters.");
-            return;
         }
 
         Map<Character, Character> substitutionMap = createSubstitutionMap(key);
