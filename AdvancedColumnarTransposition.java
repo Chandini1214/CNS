@@ -1,64 +1,101 @@
-import java.util.Arrays;
 import java.util.Scanner;
+
 public class AdvancedColumnarTransposition {
-    public static String encrypt(String plaintext, String key) {
-        int[] keyOrder = getKeyOrder(key);
-        int rows = (int) Math.ceil((double) plaintext.length() / key.length());
-        char[][] grid = new char[rows][key.length()];
-        // Fill grid with plaintext
-        int index = 0;
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < key.length(); j++) {
-                grid[i][j] = (index < plaintext.length()) ? plaintext.charAt(index++) : 'X';
-            }
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter plaintext: ");
+        String plaintext = scanner.nextLine().replaceAll("\\s+", "").toUpperCase();
+
+        System.out.print("Enter the first keyword: ");
+        String key1 = scanner.nextLine().toUpperCase();
+
+        System.out.print("Enter the second keyword: ");
+        String key2 = scanner.nextLine().toUpperCase();
+
+        String intermediateCiphertext = columnarTransposition(plaintext, key1);
+        System.out.println("Ciphertext after applying first key: " + intermediateCiphertext);
+
+        String finalCiphertext = columnarTransposition(intermediateCiphertext, key2);
+        System.out.println("Final ciphertext after applying second key: " + finalCiphertext);
+
+        String decryptedIntermediateText = decryptColumnarTransposition(finalCiphertext, key2);
+        String decryptedPlaintext = decryptColumnarTransposition(decryptedIntermediateText, key1);
+
+        System.out.println("Decrypted plaintext: " + decryptedPlaintext);
+
+        scanner.close();
+    }
+
+    public static String columnarTransposition(String text, String key) {
+        int keyLength = key.length();
+        int numRows = (int) Math.ceil((double) text.length() / keyLength);
+
+        char[][] grid = new char[numRows][keyLength];
+        for (int i = 0; i < text.length(); i++) {
+            grid[i / keyLength][i % keyLength] = text.charAt(i);
         }
-        // Read columns based on key order
+
+        for (int i = text.length(); i < numRows * keyLength; i++) {
+            grid[i / keyLength][i % keyLength] = 'X';
+        }
+
+        int[] order = getColumnOrder(key);
+
         StringBuilder ciphertext = new StringBuilder();
-        for (int col : keyOrder) {
-            for (int i = 0; i < rows; i++) {
-                ciphertext.append(grid[i][col]);
+        for (int col : order) {
+            for (int row = 0; row < numRows; row++) {
+                ciphertext.append(grid[row][col]);
             }
         }
+
         return ciphertext.toString();
     }
-    public static String decrypt(String ciphertext, String key) {
-        int[] keyOrder = getKeyOrder(key);
-        int rows = ciphertext.length() / key.length();
-        char[][] grid = new char[rows][key.length()];
-        // Fill grid column by column based on key order
+
+    public static String decryptColumnarTransposition(String text, String key) {
+        int keyLength = key.length();
+        int numRows = (int) Math.ceil((double) text.length() / keyLength);
+
+        int[] order = getColumnOrder(key);
+
+        char[][] grid = new char[numRows][keyLength];
         int index = 0;
-        for (int col : keyOrder) {
-            for (int i = 0; i < rows; i++) {
-                grid[i][col] = ciphertext.charAt(index++);
+        for (int col : order) {
+            for (int row = 0; row < numRows; row++) {
+                grid[row][col] = text.charAt(index++);
             }
         }
-        // Read rows to get plaintext
+
         StringBuilder plaintext = new StringBuilder();
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < key.length(); j++) {
-                plaintext.append(grid[i][j]);
+        for (int row = 0; row < numRows; row++) {
+            for (int col = 0; col < keyLength; col++) {
+                plaintext.append(grid[row][col]);
             }
         }
-        return plaintext.toString();
+
+        return plaintext.toString().replaceAll("X+$", "");
     }
-    private static int[] getKeyOrder(String key) {
-        int[] order = new int[key.length()];
-        Character[] chars = new Character[key.length()];
-        for (int i = 0; i < key.length(); i++) chars[i] = key.charAt(i);
-        Arrays.sort(chars, (a, b) -> a.compareTo(b));
-        for (int i = 0; i < chars.length; i++) order[i] = key.indexOf(chars[i]);
+
+    public static int[] getColumnOrder(String key) {
+        int keyLength = key.length();
+        int[] order = new int[keyLength];
+        boolean[] used = new boolean[keyLength];
+
+        for (int i = 0; i < keyLength; i++) {
+            char minChar = Character.MAX_VALUE;
+            int minIndex = -1;
+
+            for (int j = 0; j < keyLength; j++) {
+                if (!used[j] && key.charAt(j) < minChar) {
+                    minChar = key.charAt(j);
+                    minIndex = j;
+                }
+            }
+
+            order[i] = minIndex;
+            used[minIndex] = true;
+        }
+
         return order;
-    }
-    public static void main(String[] args) {
-        Scanner sc = new Scanner(System.in);
-        System.out.print("Enter plaintext: ");
-        String plaintext = sc.nextLine();
-        System.out.print("Enter key: ");
-        String key = sc.nextLine();
-        String ciphertext = encrypt(plaintext, key);
-        System.out.println("Ciphertext: " + ciphertext);
-        String decryptedText = decrypt(ciphertext, key);
-        System.out.println("Decrypted text: " + decryptedText);
-        sc.close();
     }
 }
