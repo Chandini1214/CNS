@@ -1,91 +1,189 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Scanner;
+import java.util.*;
 
 public class HillCipher {
 
-    static float[][] decrypt = new float[3][1];
-    static float[][] a = new float[3][3];
-    static float[][] b = new float[3][3];
-    static float[][] mes = new float[3][1];
-    static float[][] res = new float[3][1];
-    static BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-    static Scanner sc = new Scanner(System.in);
-
-    public static void main(String[] args) throws IOException {
-        getkeymes();
-        for (int i = 0; i < 3; i++) 
-            for (int j = 0; j < 1; j++) 
-                for (int k = 0; k < 3; k++) {
-                    res[i][j] = res[i][j] + a[i][k] * mes[k][j];
-                }
-                
-        System.out.print("\nEncrypted string is : ");
-        for (int i = 0; i < 3; i++) {
-            System.out.print((char) (res[i][0] % 26 + 97));
-            res[i][0] = res[i][0];
+    // Function to get the determinant of a matrix
+    public static int determinant(int[][] matrix, int n) {
+        int det = 0;
+        if (n == 1) {
+            return matrix[0][0];
         }
-        
-        inverse();
-        
-        for (int i = 0; i < 3; i++) 
-            for (int j = 0; j < 1; j++) 
-                for (int k = 0; k < 3; k++) {
-                    decrypt[i][j] = decrypt[i][j] + b[i][k] * res[k][j];
-                }
-                
-        System.out.print("\nDecrypted string is : ");
-        for (int i = 0; i < 3; i++) {
-            System.out.print((char) (decrypt[i][0] % 26 + 97));
+        int[][] temp = new int[n][n];
+        int sign = 1;
+        for (int f = 0; f < n; f++) {
+            getCofactor(matrix, temp, 0, f, n);
+            det += sign * matrix[0][f] * determinant(temp, n - 1);
+            sign = -sign;
         }
-        System.out.print("\n");
+        return det;
     }
 
-    public static void getkeymes() throws IOException {
-        System.out.println("Enter 3x3 matrix for key (It should be invertible): ");
-        for (int i = 0; i < 3; i++) 
-            for (int j = 0; j < 3; j++) 
-                a[i][j] = sc.nextFloat();
-
-        System.out.print("\nEnter a 3-letter string: ");
-        String msg = br.readLine();
-        for (int i = 0; i < 3; i++) 
-            mes[i][0] = msg.charAt(i) - 97;
-    }
-
-    public static void inverse() {
-        float p, q;
-        float[][] c = new float[3][3];
-        for (int i = 0; i < 3; i++) 
-            for (int j = 0; j < 3; j++) {
-                c[i][j] = a[i][j];
-                b[i][j] = (i == j) ? 1 : 0;
-            }
-
-        for (int k = 0; k < 3; k++) {
-            for (int i = 0; i < 3; i++) {
-                p = c[i][k];
-                q = c[k][k];
-                for (int j = 0; j < 3; j++) {
-                    if (i != k) {
-                        c[i][j] = c[i][j] * q - p * c[k][j];
-                        b[i][j] = b[i][j] * q - p * b[k][j];
+    // Function to get the cofactor of a matrix
+    public static void getCofactor(int[][] matrix, int[][] temp, int p, int q, int n) {
+        int i = 0, j = 0;
+        for (int row = 0; row < n; row++) {
+            for (int col = 0; col < n; col++) {
+                if (row != p && col != q) {
+                    temp[i][j++] = matrix[row][col];
+                    if (j == n - 1) {
+                        j = 0;
+                        i++;
                     }
                 }
             }
         }
+    }
 
-        for (int i = 0; i < 3; i++) 
-            for (int j = 0; j < 3; j++) {
-                b[i][j] = b[i][j] / c[i][i];
-            }
-
-        System.out.println("\nInverse Matrix is : ");
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) 
-                System.out.print(b[i][j] + " ");
-            System.out.print("\n");
+    // Function to get the adjoint of a matrix
+    public static void adjoint(int[][] matrix, int[][] adj, int n) {
+        if (n == 1) {
+            adj[0][0] = 1;
+            return;
         }
+        int sign = 1;
+        int[][] temp = new int[n][n];
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                getCofactor(matrix, temp, i, j, n);
+                sign = ((i + j) % 2 == 0) ? 1 : -1;
+                adj[j][i] = (sign) * (determinant(temp, n - 1));
+            }
+        }
+    }
+
+    // Function to find the inverse of a matrix modulo 26
+    public static boolean inverse(int[][] matrix, int[][] inverse, int n) {
+        int det = determinant(matrix, n);
+        det = mod(det, 26);
+        int detInverse = modInverse(det, 26);
+        if (detInverse == -1) {
+            return false;
+        }
+        int[][] adj = new int[n][n];
+        adjoint(matrix, adj, n);
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                inverse[i][j] = mod(adj[i][j] * detInverse, 26);
+            }
+        }
+        return true;
+    }
+
+    // Function to perform modulo operation
+    public static int mod(int a, int m) {
+        return (a % m + m) % m;
+    }
+
+    // Function to find modular inverse
+    public static int modInverse(int a, int m) {
+        a = mod(a, m);
+        for (int x = 1; x < m; x++) {
+            if ((a * x) % m == 1) {
+                return x;
+            }
+        }
+        return -1;
+    }
+
+    // Function to encrypt a message
+    public static String encrypt(String plaintext, int[][] key) {
+        int n = key.length;
+        int[] msg = new int[plaintext.length()];
+        for (int i = 0; i < plaintext.length(); i++) {
+            msg[i] = plaintext.charAt(i) - 'A';
+        }
+
+        StringBuilder ciphertext = new StringBuilder();
+        for (int i = 0; i < msg.length; i += n) {
+            int[] block = new int[n];
+            for (int j = 0; j < n && (i + j) < msg.length; j++) {
+                block[j] = msg[i + j];
+            }
+            int[] encryptedBlock = new int[n];
+            for (int j = 0; j < n; j++) {
+                encryptedBlock[j] = 0;
+                for (int k = 0; k < n; k++) {
+                    encryptedBlock[j] += key[j][k] * block[k];
+                }
+                encryptedBlock[j] = mod(encryptedBlock[j], 26);
+            }
+            for (int j = 0; j < n; j++) {
+                ciphertext.append((char) (encryptedBlock[j] + 'A'));
+            }
+        }
+        return ciphertext.toString();
+    }
+
+    // Function to decrypt a message
+    public static String decrypt(String ciphertext, int[][] key) {
+        int n = key.length;
+        int[][] inverseKey = new int[n][n];
+        if (!inverse(key, inverseKey, n)) {
+            return "Inverse not possible!";
+        }
+
+        int[] msg = new int[ciphertext.length()];
+        for (int i = 0; i < ciphertext.length(); i++) {
+            msg[i] = ciphertext.charAt(i) - 'A';
+        }
+
+        StringBuilder plaintext = new StringBuilder();
+        for (int i = 0; i < msg.length; i += n) {
+            int[] block = new int[n];
+            for (int j = 0; j < n && (i + j) < msg.length; j++) {
+                block[j] = msg[i + j];
+            }
+            int[] decryptedBlock = new int[n];
+            for (int j = 0; j < n; j++) {
+                decryptedBlock[j] = 0;
+                for (int k = 0; k < n; k++) {
+                    decryptedBlock[j] += inverseKey[j][k] * block[k];
+                }
+                decryptedBlock[j] = mod(decryptedBlock[j], 26);
+            }
+            for (int j = 0; j < n; j++) {
+                plaintext.append((char) (decryptedBlock[j] + 'A'));
+            }
+        }
+        return plaintext.toString();
+    }
+
+    // Main method for taking input dynamically
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Enter the size of the matrix (n x n)
+        System.out.print("Enter the size of the key matrix (n): ");
+        int n = sc.nextInt();
+
+        // Input the key matrix
+        int[][] key = new int[n][n];
+        System.out.println("Enter the key matrix (" + n + "x" + n + "): ");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                key[i][j] = sc.nextInt();
+            }
+        }
+
+        // Input the plaintext message
+        sc.nextLine();  // Consume the newline character after nextInt
+        System.out.print("Enter the plaintext (letters only, no spaces): ");
+        String plaintext = sc.nextLine().toUpperCase();
+
+        // Ensure the length of the plaintext is a multiple of n
+        if (plaintext.length() % n != 0) {
+            System.out.println("Error: The length of the plaintext must be a multiple of " + n);
+            return;
+        }
+
+        System.out.println("Plaintext: " + plaintext);
+
+        // Encrypt the plaintext
+        String ciphertext = encrypt(plaintext, key);
+        System.out.println("Ciphertext: " + ciphertext);
+
+        // Decrypt the ciphertext
+        String decryptedText = decrypt(ciphertext, key);
+        System.out.println("Decrypted Text: " + decryptedText);
     }
 }
