@@ -169,7 +169,7 @@ public class HillCipher {
         sc.nextLine();  // Consume the newline character after nextInt
         System.out.print("Enter the plaintext (letters only, no spaces): ");
         String plaintext = sc.nextLine().toUpperCase();
-
+        sc.close();
         // Ensure the length of the plaintext is a multiple of n
         if (plaintext.length() % n != 0) {
             System.out.println("Error: The length of the plaintext must be a multiple of " + n);
