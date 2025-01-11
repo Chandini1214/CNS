@@ -44,9 +44,11 @@ public class SimpleColumnarTranspositionCipher {
     private static int[] getKeyOrder(String key) {
         int[] order = new int[key.length()];
         Character[] chars = new Character[key.length()];
-        for (int i = 0; i < key.length(); i++) chars[i] = key.charAt(i);
+        for (int i = 0; i < key.length(); i++)
+         chars[i] = key.charAt(i);
         Arrays.sort(chars, (a, b) -> a.compareTo(b));
-        for (int i = 0; i < chars.length; i++) order[i] = key.indexOf(chars[i]);
+        for (int i = 0; i < chars.length; i++) 
+        order[i] = key.indexOf(chars[i]);
         return order;
     }
     public static void main(String[] args) {
