@@ -1,52 +1,55 @@
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.Base64;
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.DESedeKeySpec;
+import java.util.Scanner;
+import java.util.Base64;
+
 public class DES {
-private static final String UNICODE_FORMAT = "UTF8";
-private static final String DESEDE_ENCRYPTION_SCHEME = "DESede";
-private Cipher cipher;
-private SecretKey key;
-private String myEncryptionKey = "ThisIsSecretEncryptionKey";
-public DES() throws Exception {
-byte[] keyAsBytes = myEncryptionKey.getBytes(UNICODE_FORMAT);
-DESedeKeySpec myKeySpec = new DESedeKeySpec(keyAsBytes);
-SecretKeyFactory mySecretKeyFactory = SecretKeyFactory.getInstance(DESEDE_ENCRYPTION_SCHEME);
-key = mySecretKeyFactory.generateSecret(myKeySpec);
-}
-public String encrypt(String unencryptedString) {
-try {
-cipher.init(Cipher.ENCRYPT_MODE, key);
-byte[] plainText = unencryptedString.getBytes(UNICODE_FORMAT);
-byte[] encryptedText = cipher.doFinal(plainText);
-return Base64.getEncoder().encodeToString(encryptedText);
-} catch (Exception e) {
-e.printStackTrace();
-return null;
-}
-}
-public String decrypt(String encryptedString) {
-try {
-cipher.init(Cipher.DECRYPT_MODE, key);
-byte[] encryptedText = Base64.getDecoder().decode(encryptedString);
-byte[] plainText = cipher.doFinal(encryptedText);
-return new String(plainText, UNICODE_FORMAT);
-} catch (Exception e) {
-e.printStackTrace();
-return null;
-}
-}
-public static void main(String args[]) throws Exception {
-DES myEncryptor = new DES();
-BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-System.out.print("Enter the string to encrypt: ");
-String stringToEncrypt = br.readLine();
-String encryptedString = myEncryptor.encrypt(stringToEncrypt);
-System.out.println("Encrypted String: " + encryptedString);
-String decryptedString = myEncryptor.decrypt(encryptedString);
-System.out.println("Decrypted String: " + decryptedString);
-}
+    
+    // Method to generate a DES key
+    public static SecretKey generateKey() throws Exception {
+        KeyGenerator keyGenerator = KeyGenerator.getInstance("DES");
+        keyGenerator.init(56); // DES uses a 56-bit key
+        return keyGenerator.generateKey();
+    }
+
+    // Method to encrypt text using DES
+    public static String encryptText(String plainText, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("DES");
+        cipher.init(Cipher.ENCRYPT_MODE, key);
+        byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
+        return Base64.getEncoder().encodeToString(encryptedBytes);
+    }
+
+    // Method to decrypt text using DES
+    public static String decryptText(String encryptedText, SecretKey key) throws Exception {
+        Cipher cipher = Cipher.getInstance("DES");
+        cipher.init(Cipher.DECRYPT_MODE, key);
+        byte[] decodedBytes = Base64.getDecoder().decode(encryptedText);
+        byte[] decryptedBytes = cipher.doFinal(decodedBytes);
+        return new String(decryptedBytes);
+    }
+
+    public static void main(String[] args) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            // Generate DES key
+            SecretKey secretKey = generateKey();
+            System.out.println("Generated DES Key (Base64): " + Base64.getEncoder().encodeToString(secretKey.getEncoded()));
+
+            // Read plaintext input from the user
+            System.out.print("Enter text to encrypt: ");
+            String plainText = scanner.nextLine();
+
+            // Encrypt the input text
+            String encryptedText = encryptText(plainText, secretKey);
+            System.out.println("Encrypted Text: " + encryptedText);
+
+            // Decrypt the encrypted text
+            String decryptedText = decryptText(encryptedText, secretKey);
+            System.out.println("Decrypted Text: " + decryptedText);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
